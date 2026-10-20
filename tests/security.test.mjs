@@ -164,7 +164,7 @@ test('handler streams hashed uploads and preserves S3 multipart parameters', asy
         const independent = new aws4.RequestSigner({ host: url.host, path: url.pathname + url.search, service: 's3', region: 'us-west-004', method: options.method, headers: Object.fromEntries(options.headers), extraHeadersToIgnore: { 'content-length': true }, extraHeadersToInclude: { range: true } }, credentials);
         independent.prepareRequest();
         assert.equal(options.headers.get('authorization').split('Signature=')[1], independent.signature());
-        assert.equal(options.redirect, 'error');
+        assert.equal(options.redirect, 'manual');
         assert.deepEqual(options.cf, { cacheEverything: false, cacheTtl: 0 });
         return new Response('saved', { status: 200, headers: { 'Cache-Control': 'public, max-age=86400' } });
     });

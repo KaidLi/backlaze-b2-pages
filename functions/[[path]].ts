@@ -65,10 +65,16 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
             method: request.method,
             headers,
             body: request.body,
-            redirect: 'error',
+            // Workers supports only follow/manual. Never forward signed
+            // credentials to a redirect target supplied by the upstream.
+            redirect: 'manual',
             cf: { cacheEverything: false, cacheTtl: 0 },
         };
         const response = await fetch(upstream, options);
+        if ([301, 302, 303, 307, 308].includes(response.status)) {
+            await response.body?.cancel();
+            return errorResponse(502, 'Upstream request failed');
+        }
         const responseHeaders = new Headers(response.headers);
         responseHeaders.set('Cache-Control', 'private, no-store');
         responseHeaders.set('X-Proxy', 'b2-pages-verified');
