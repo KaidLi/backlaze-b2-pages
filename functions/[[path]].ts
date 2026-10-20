@@ -28,7 +28,12 @@ export const onRequest: PagesFunction<Env> = async ({ request, env }) => {
         if (!env.B2_ACCESS_KEY_ID || !env.B2_SECRET_ACCESS_KEY || !env.B2_ENDPOINT || !/^[A-Za-z0-9][A-Za-z0-9.-]{1,61}[A-Za-z0-9]$/.test(env.B2_BUCKET_NAME || '')) {
             return errorResponse(500, 'Proxy configuration error');
         }
-        const endpoint = new URL(env.B2_ENDPOINT.includes('://') ? env.B2_ENDPOINT : 'https://' + env.B2_ENDPOINT);
+        let endpoint: URL;
+        try {
+            endpoint = new URL(env.B2_ENDPOINT.includes('://') ? env.B2_ENDPOINT : 'https://' + env.B2_ENDPOINT);
+        } catch {
+            return errorResponse(500, 'Proxy configuration error');
+        }
         const region = /^s3\.([a-z0-9-]+)\.backblazeb2\.com$/.exec(endpoint.hostname)?.[1];
         if (!region || endpoint.protocol !== 'https:' || endpoint.port || endpoint.username || endpoint.password || endpoint.search || endpoint.hash || endpoint.pathname !== '/') {
             return errorResponse(500, 'Proxy configuration error');

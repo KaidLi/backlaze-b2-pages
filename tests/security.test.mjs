@@ -12,6 +12,22 @@ const fixed = new Date('2026-10-20T12:00:00Z');
 const amzDate = date => date.toISOString().replace(/[:-]|\.\d{3}/g, '');
 const sha256 = value => createHash('sha256').update(value).digest('hex');
 
+test('malformed endpoint is a configuration error and never contacts B2', async t => {
+    t.mock.method(globalThis, 'fetch', () => { throw new Error('must not fetch'); });
+    const response = await onRequest({ request: new Request('https://proxy.example.com/'), env: { ...env, B2_ENDPOINT: 'https://' } });
+    assert.equal(response.status, 500);
+    assert.deepEqual(await response.json(), { error: 'Proxy configuration error' });
+    assert.equal(globalThis.fetch.mock.callCount(), 0);
+});
+
+test('configured proxy rejects anonymous requests before contacting B2', async t => {
+    t.mock.method(globalThis, 'fetch', () => { throw new Error('must not fetch'); });
+    const response = await onRequest({ request: new Request('https://proxy.example.com/'), env });
+    assert.equal(response.status, 401);
+    assert.deepEqual(await response.json(), { error: 'Authentication failed' });
+    assert.equal(globalThis.fetch.mock.callCount(), 0);
+});
+
 function signed({ method = 'GET', path = '/memo-assets/image.png', date = fixed, headers = {}, body, presigned = false, expires = '60', keys = credentials } = {}) {
     if (presigned) path += (path.includes('?') ? '&' : '?') + `X-Amz-Date=${amzDate(date)}&X-Amz-Expires=${expires}`;
     const request = aws4.sign({ host: 'proxy.example.com', path, service: 's3', region: 'us-west-004', method, headers: presigned ? { ...headers } : { 'X-Amz-Date': amzDate(date), ...headers }, body, signQuery: presigned, extraHeadersToInclude: { range: true } }, keys);
