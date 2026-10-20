@@ -30,6 +30,8 @@ B2 到 Cloudflare 的流量可利用带宽联盟。该项目不会改变 B2 存�
 4. 在 Pages 项目的运行环境变量中填写下表四项。生产环境与预览环境分别配置，不要把密钥写入源码或提交到 Git。
 5. 重新部署，使运行环境变量生效。
 
+也可以通过已登录的 Wrangler 直接部署：`npm run deploy -- --project-name <项目名> --branch main`。本仓库的 Wrangler 配置只用于本地开发，生产变量由 Cloudflare Dashboard 管理。直接上传创建的 Pages 项目没有连接 GitHub，后续更新需要再次运行部署命令；后台保存变量后也需要创建新部署。
+
 | 变量 | 内容 |
 | --- | --- |
 | `B2_BUCKET_NAME` | B2 实际私有桶名称 |
